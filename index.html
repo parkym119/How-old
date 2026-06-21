@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>만 나이 및 법적 허용 계산기</title>
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f5f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+        }
+        input[type="date"]:focus {
+            border-color: #4a90e2;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #357abd;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f0f4f9;
+            border-radius: 8px;
+            text-align: center;
+            display: none;
+        }
+        .result p {
+            margin: 5px 0;
+            font-size: 16px;
+            color: #444;
+        }
+        .result .age-highlight {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4a90e2;
+        }
+        .law-section {
+            margin-top: 25px;
+            border-top: 2px dashed #ddd;
+            padding-top: 20px;
+            display: none;
+        }
+        .law-section h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .law-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+        .law-title {
+            font-weight: 500;
+            color: #444;
+        }
+        .law-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-pass {
+            background-color: #e6f4ea;
+            color: #137333;
+        }
+        .badge-fail {
+            background-color: #fce8e6;
+            color: #c5221f;
+        }
+        .law-info {
+            font-size: 11px;
+            color: #888;
+            margin-top: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>📅 만 나이 & 자격 판단기</h1>
+    
+    <div class="form-group">
+        <label for="birthDate">생년월일 입력</label>
+        <input type="date" id="birthDate">
+    </div>
+    
+    <div class="form-group">
+        <label for="baseDate">기준일 선택 (기본값: 오늘)</label>
+        <input type="date" id="baseDate">
+    </div>
+    
+    <button onclick="calculateAge()">나이 및 자격 조회</button>
+    
+    <!-- 나이 결과 박스 -->
+    <div class="result" id="resultBox">
+        <p id="resultText"></p>
+    </div>
+    
+    <!-- 법적 허용 리스트 섹션 -->
+    <div class="law-section" id="lawSection">
+        <h2>⚖️ 법적 허용 및 자격 요건 안내</h2>
+        <div id="lawList"></div>
+    </div>
+</div>
+
+<script>
+    // 페이지 로드 시 기준일을 오늘 날짜로 세팅
+    document.getElementById('baseDate').value = new Date().toISOString().substring(0, 10);
+
+    function calculateAge() {
+        const birthInput = document.getElementById('birthDate').value;
+        const baseInput = document.getElementById('baseDate').value;
+        
+        if (!birthInput) {
+            alert('생년월일을 입력해 주세요!');
+            return;
+        }
+        
+        const birthDate = new Date(birthInput);
+        const baseDate = new Date(baseInput);
+        
+        if (birthDate > baseDate) {
+            alert('생년월일이 기준일보다 클 수 없습니다.');
+            return;
+        }
+        
+        // 1. 만 나이 계산
+        let manAge = baseDate.getFullYear() - birthDate.getFullYear();
+        const monthDiff = baseDate.getMonth() - birthDate.getMonth();
+        const dayDiff = baseDate.getDate() - birthDate.getDate();
+        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+            manAge--;
+        }
+        
+        // 2. 연 나이 계산 (현재연도 - 태어난연도 / 청소년보호법 기준)
+        const yeonAge = baseDate.getFullYear() - birthDate.getFullYear();
+        
+        // 결과 상단 출력
+        const resultBox = document.getElementById('resultBox');
+        const resultText = document.getElementById('resultText');
+        resultText.innerHTML = `기준일 기준 당신의 나이는<br><span class="age-highlight">만 ${manAge}세</span> (연 나이 ${yeonAge}세) 입니다.`;
+        resultBox.style.display = 'block';
+
+        // 3. 법적 자격 조건 리스트 정의
+        // type: 'man'(만나이) 또는 'yeon'(연나이)
+        const lawCriteria = [
+            { name: "🍺 음주 및 담배 구매", age: 19, type: "yeon", desc: "청소년보호법: 태어난 연도 기준 19세가 되는 해의 1월 1일부터 가능" },
+            { name: "🗳️ 대통령 및 지방선거 투표", age: 18, type: "man", desc: "공직선거법: 만 18세 이상 선거권 부여" },
+            { name: "🚗 일반 운전면허 취득 (1·2종 보통)", age: 18, type: "man", desc: "도로교통법: 만 18세 이상부터 면허 시험 응시 가능" },
+            { name: "🛵 원동기장치자전거 면허 (오토바이)", age: 16, type: "man", desc: "도로교통법: 만 16세 이상부터 취득 가능" },
+            { name: "💼 공무원 시험 응시 (7·9급 일반직)", age: 18, type: "yeon", desc: "공무원임용시험령: 교정·보호직 제외 18세 이상 가능" },
+            { name: "📜 국가 기술 자격증 (기사/산업기사)", age: 0, type: "special", desc: "기능사는 제한 없음 / 산업기사는 관련학과 전문대졸 이상 (나이제한 없음)" },
+            { name: "🏢 공인중개사 자격증 취득", age: 0, type: "always_pass", desc: "공인중개사법: 연령, 학력, 국적 제한 없이 누구나 응시 가능" }
+        ];
+
+        // 리스트 동적 생성
+        const lawList = document.getElementById('lawList');
+        lawList.innerHTML = ''; // 초기화
+
+        lawCriteria.forEach(item => {
+            let isPassed = false;
+            
+            if (item.type === "man") {
+                isPassed = (manAge >= item.age);
+            } else if (item.type === "yeon") {
+                isPassed = (yeonAge >= item.age);
+            } else if (item.type === "always_pass") {
+                isPassed = true;
+            } else if (item.type === "special") {
+                isPassed = true; // 자격증 특수 안내용
+            }
+
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'law-item';
+            
+            let badgeText = isPassed ? "가능 / 통과" : "불가능 / 미달";
+            let badgeClass = isPassed ? "badge-pass" : "badge-fail";
+            
+            if (item.type === "special") {
+                badgeText = "조건부 확인";
+                badgeClass = "badge-pass";
+            }
+
+            itemDiv.innerHTML = `
+                <div>
+                    <div class="law-title">${item.name}</div>
+                    <div class="law-info">${item.desc}</div>
+                </div>
+                <span class="law-badge ${badgeClass}">${badgeText}</span>
+            `;
+            lawList.appendChild(itemDiv);
+        });
+
+        document.getElementById('lawSection').style.display = 'block';
+    }
+</script>
+
+</body>
+</html>
