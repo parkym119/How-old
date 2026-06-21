@@ -3,254 +3,216 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>만 나이 및 법적 허용 계산기</title>
+    <title>유틸리티 웹 툴 허브</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: 'Noto Sans KR', sans-serif;
-            background-color: #f5f7fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-        .container {
-            background-color: #ffffff;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 500px;
-            box-sizing: border-box;
-        }
-        h1 {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        input[type="date"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box;
-            outline: none;
-        }
-        input[type="date"]:focus {
-            border-color: #4a90e2;
-        }
-        button {
-            width: 100%;
-            padding: 12px;
-            background-color: #4a90e2;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background 0.2s;
-            margin-top: 10px;
-        }
-        button:hover {
-            background-color: #357abd;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #f0f4f9;
-            border-radius: 8px;
-            text-align: center;
-            display: none;
-        }
-        .result p {
-            margin: 5px 0;
-            font-size: 16px;
-            color: #444;
-        }
-        .result .age-highlight {
-            font-size: 22px;
-            font-weight: bold;
-            color: #4a90e2;
-        }
-        .law-section {
-            margin-top: 25px;
-            border-top: 2px dashed #ddd;
-            padding-top: 20px;
-            display: none;
-        }
-        .law-section h2 {
-            font-size: 18px;
-            color: #333;
-            margin-bottom: 15px;
-        }
-        .law-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-            font-size: 14px;
-        }
-        .law-title {
-            font-weight: 500;
-            color: #444;
-        }
-        .law-badge {
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .badge-pass {
-            background-color: #e6f4ea;
-            color: #137333;
-        }
-        .badge-fail {
-            background-color: #fce8e6;
-            color: #c5221f;
-        }
-        .law-info {
-            font-size: 11px;
-            color: #888;
-            margin-top: 3px;
-        }
+        /* 트리 메뉴 토글용 스타일 */
+        .submenu { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        .submenu.open { max-height: 500px; transition: max-height 0.3s ease-in; }
+        .rotate-icon { transition: transform 0.2s ease; }
+        .rotate-icon.open { transform: rotate(90deg); }
     </style>
 </head>
-<body>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
 
-<div class="container">
-    <h1>📅 만 나이 & 자격 판단기</h1>
-    
-    <div class="form-group">
-        <label for="birthDate">생년월일 입력</label>
-        <input type="date" id="birthDate">
-    </div>
-    
-    <div class="form-group">
-        <label for="baseDate">기준일 선택 (기본값: 오늘)</label>
-        <input type="date" id="baseDate">
-    </div>
-    
-    <button onclick="calculateAge()">나이 및 자격 조회</button>
-    
-    <!-- 나이 결과 박스 -->
-    <div class="result" id="resultBox">
-        <p id="resultText"></p>
-    </div>
-    
-    <!-- 법적 허용 리스트 섹션 -->
-    <div class="law-section" id="lawSection">
-        <h2>⚖️ 법적 허용 및 자격 요건 안내</h2>
-        <div id="lawList"></div>
-    </div>
-</div>
-
-<script>
-    // 페이지 로드 시 기준일을 오늘 날짜로 세팅
-    document.getElementById('baseDate').value = new Date().toISOString().substring(0, 10);
-
-    function calculateAge() {
-        const birthInput = document.getElementById('birthDate').value;
-        const baseInput = document.getElementById('baseDate').value;
+    <div class="flex h-screen overflow-hidden">
         
-        if (!birthInput) {
-            alert('생년월일을 입력해 주세요!');
-            return;
-        }
-        
-        const birthDate = new Date(birthInput);
-        const baseDate = new Date(baseInput);
-        
-        if (birthDate > baseDate) {
-            alert('생년월일이 기준일보다 클 수 없습니다.');
-            return;
-        }
-        
-        // 1. 만 나이 계산
-        let manAge = baseDate.getFullYear() - birthDate.getFullYear();
-        const monthDiff = baseDate.getMonth() - birthDate.getMonth();
-        const dayDiff = baseDate.getDate() - birthDate.getDate();
-        if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
-            manAge--;
-        }
-        
-        // 2. 연 나이 계산 (현재연도 - 태어난연도 / 청소년보호법 기준)
-        const yeonAge = baseDate.getFullYear() - birthDate.getFullYear();
-        
-        // 결과 상단 출력
-        const resultBox = document.getElementById('resultBox');
-        const resultText = document.getElementById('resultText');
-        resultText.innerHTML = `기준일 기준 당신의 나이는<br><span class="age-highlight">만 ${manAge}세</span> (연 나이 ${yeonAge}세) 입니다.`;
-        resultBox.style.display = 'block';
-
-        // 3. 법적 자격 조건 리스트 정의
-        // type: 'man'(만나이) 또는 'yeon'(연나이)
-        const lawCriteria = [
-            { name: "🍺 음주 및 담배 구매", age: 19, type: "yeon", desc: "청소년보호법: 태어난 연도 기준 19세가 되는 해의 1월 1일부터 가능" },
-            { name: "🗳️ 대통령 및 지방선거 투표", age: 18, type: "man", desc: "공직선거법: 만 18세 이상 선거권 부여" },
-            { name: "🚗 일반 운전면허 취득 (1·2종 보통)", age: 18, type: "man", desc: "도로교통법: 만 18세 이상부터 면허 시험 응시 가능" },
-            { name: "🛵 원동기장치자전거 면허 (오토바이)", age: 16, type: "man", desc: "도로교통법: 만 16세 이상부터 취득 가능" },
-            { name: "💼 공무원 시험 응시 (7·9급 일반직)", age: 18, type: "yeon", desc: "공무원임용시험령: 교정·보호직 제외 18세 이상 가능" },
-            { name: "📜 국가 기술 자격증 (기사/산업기사)", age: 0, type: "special", desc: "기능사는 제한 없음 / 산업기사는 관련학과 전문대졸 이상 (나이제한 없음)" },
-            { name: "🏢 공인중개사 자격증 취득", age: 0, type: "always_pass", desc: "공인중개사법: 연령, 학력, 국적 제한 없이 누구나 응시 가능" }
-        ];
-
-        // 리스트 동적 생성
-        const lawList = document.getElementById('lawList');
-        lawList.innerHTML = ''; // 초기화
-
-        lawCriteria.forEach(item => {
-            let isPassed = false;
+        <aside class="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
+            <div class="p-4 border-b border-gray-200 flex items-center gap-2">
+                <i class="fa-solid fa-toolbox text-blue-600 text-xl"></i>
+                <span class="font-bold text-lg tracking-tight">Web Tool Hub</span>
+            </div>
             
-            if (item.type === "man") {
-                isPassed = (manAge >= item.age);
-            } else if (item.type === "yeon") {
-                isPassed = (yeonAge >= item.age);
-            } else if (item.type === "always_pass") {
-                isPassed = true;
-            } else if (item.type === "special") {
-                isPassed = true; // 자격증 특수 안내용
-            }
-
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'law-item';
-            
-            let badgeText = isPassed ? "가능 / 통과" : "불가능 / 미달";
-            let badgeClass = isPassed ? "badge-pass" : "badge-fail";
-            
-            if (item.type === "special") {
-                badgeText = "조건부 확인";
-                badgeClass = "badge-pass";
-            }
-
-            itemDiv.innerHTML = `
+            <nav class="flex-1 overflow-y-auto p-3 space-y-1 text-sm select-none">
+                
                 <div>
-                    <div class="law-title">${item.name}</div>
-                    <div class="law-info">${item.desc}</div>
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer font-medium text-gray-700" onclick="toggleFolder('folder1', 'arrow1')">
+                        <div class="flex items-center gap-2">
+                            <i id="arrow1" class="fa-solid fa-chevron-right text-xs text-gray-400 rotate-icon"></i>
+                            <i class="fa-solid fa-folder text-yellow-500"></i>
+                            <span>생활 / 세금 계산기</span>
+                        </div>
+                    </div>
+                    <div id="folder1" class="submenu pl-6 space-y-1 mt-0.5">
+                        <button onclick="switchContent('age-calc')" class="w-full text-left p-2 rounded hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 text-gray-600">
+                            <i class="fa-solid fa-calculator text-gray-400"></i> 만나이 계산기
+                        </button>
+                        <button onclick="switchContent('tax-calc')" class="w-full text-left p-2 rounded hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 text-gray-600">
+                            <i class="fa-solid fa-coins text-gray-400"></i> 부동산 취득세 계산기
+                        </button>
+                    </div>
                 </div>
-                <span class="law-badge ${badgeClass}">${badgeText}</span>
-            `;
-            lawList.appendChild(itemDiv);
+
+                <div class="mt-2">
+                    <div class="flex items-center justify-between p-2 hover:bg-gray-100 rounded cursor-pointer font-medium text-gray-700" onclick="toggleFolder('folder2', 'arrow2')">
+                        <div class="flex items-center gap-2">
+                            <i id="arrow2" class="fa-solid fa-chevron-right text-xs text-gray-400 rotate-icon"></i>
+                            <i class="fa-solid fa-folder text-yellow-500"></i>
+                            <span>직장인 정보</span>
+                        </div>
+                    </div>
+                    <div id="folder2" class="submenu pl-6 space-y-1 mt-0.5">
+                        <button onclick="switchContent('salary-table')" class="w-full text-left p-2 rounded hover:bg-blue-50 hover:text-blue-600 flex items-center gap-2 text-gray-600">
+                            <i class="fa-solid fa-table text-gray-400"></i> 공무원 봉급표
+                        </button>
+                    </div>
+                </div>
+
+            </nav>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto bg-gray-50 p-8 flex justify-center">
+            <div class="w-full max-w-3xl">
+                
+                <div id="content-home" class="content-page bg-white p-8 rounded-xl border border-gray-200 shadow-xs text-center py-20">
+                    <i class="fa-solid fa-circle-info text-5xl text-blue-500 mb-4"></i>
+                    <h1 class="text-2xl font-bold mb-2">원하시는 도구를 선택해 주세요</h1>
+                    <p class="text-gray-500">왼쪽 파일 탐색기 메뉴에서 필요한 계산기나 정보를 클릭하시면 화면에 나타납니다.</p>
+                </div>
+
+                <div id="content-age-calc" class="content-page hidden bg-white p-8 rounded-xl border border-gray-200 shadow-xs">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-calculator text-blue-600"></i> 만나이 계산기
+                    </h2>
+                    <p class="text-gray-600 mb-6 text-sm">출생일을 선택하시면 오늘 날짜 기준으로 정확한 만나이를 계산합니다.</p>
+                    <div class="space-y-4 max-w-sm">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">생년월일 입력</label>
+                            <input type="date" id="birthDate" class="w-full p-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button onclick="calculateAge()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium p-2 rounded-md transition">계산하기</button>
+                        <div id="ageResult" class="mt-4 p-4 bg-gray-50 rounded-md font-semibold text-blue-700 text-center hidden"></div>
+                    </div>
+                </div>
+
+                <div id="content-tax-calc" class="content-page hidden bg-white p-8 rounded-xl border border-gray-200 shadow-xs">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-coins text-blue-600"></i> 부동산 취득세 계산기 (가상)
+                    </h2>
+                    <p class="text-gray-600 mb-6 text-sm">매매 금액에 따른 대략적인 취득세를 계산하는 예시 화면입니다.</p>
+                    <div class="space-y-4 max-w-sm">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">매매 금액 (원)</label>
+                            <input type="number" id="housePrice" placeholder="예: 600000000" class="w-full p-2 border border-gray-300 rounded-md focus:outline-hidden focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <button onclick="calculateTax()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium p-2 rounded-md transition">취득세 계산</button>
+                        <div id="taxResult" class="mt-4 p-4 bg-gray-50 rounded-md font-semibold text-red-600 text-center hidden"></div>
+                    </div>
+                </div>
+
+                <div id="content-salary-table" class="content-page hidden bg-white p-8 rounded-xl border border-gray-200 shadow-xs">
+                    <h2 class="text-xl font-bold mb-4 border-b pb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-table text-blue-600"></i> 일반직 공무원 봉급표 (예시 데이터)
+                    </h2>
+                    <p class="text-gray-600 mb-4 text-sm">계급과 호봉에 따른 기본급 표 예시입니다. (실제 데이터 반영 영역)</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-100 border-b border-gray-200 text-gray-700">
+                                    <th class="p-3 font-semibold">호봉</th>
+                                    <th class="p-3 font-semibold">9급</th>
+                                    <th class="p-3 font-semibold">8급</th>
+                                    <th class="p-3 font-semibold">7급</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-gray-600">
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3 font-medium bg-gray-50">1호봉</td>
+                                    <td class="p-3">1,870,000 원</td>
+                                    <td class="p-3">1,950,000 원</td>
+                                    <td class="p-3">2,150,000 원</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3 font-medium bg-gray-50">2호봉</td>
+                                    <td class="p-3">1,920,000 원</td>
+                                    <td class="p-3">2,030,000 원</td>
+                                    <td class="p-3">2,250,000 원</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50">
+                                    <td class="p-3 font-medium bg-gray-50">3호봉</td>
+                                    <td class="p-3">1,980,000 원</td>
+                                    <td class="p-3">2,120,000 원</td>
+                                    <td class="p-3">2,360,000 원</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // 1) 트리 메뉴 열고 닫기(Toggle) 함수
+        function toggleFolder(folderId, arrowId) {
+            const folder = document.getElementById(folderId);
+            const arrow = document.getElementById(arrowId);
+            
+            folder.classList.toggle('open');
+            arrow.classList.toggle('open');
+        }
+
+        // 2) 클릭한 메뉴에 맞는 콘텐츠 띄우기 함수
+        function switchContent(contentId) {
+            // 모든 콘텐츠 숨기기
+            const pages = document.querySelectorAll('.content-page');
+            pages.forEach(page => page.classList.add('hidden'));
+            
+            // 홈 화면도 숨기기
+            document.getElementById('content-home').classList.add('hidden');
+            
+            // 선택한 콘텐츠만 보이기
+            const targetPage = document.getElementById('content-' + contentId);
+            if(targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+        }
+
+        // 3) 만나이 계산 로직
+        function calculateAge() {
+            const birthInput = document.getElementById('birthDate').value;
+            if (!birthInput) {
+                alert('생년월일을 선택해 주세요.');
+                return;
+            }
+            const birthDate = new Date(birthInput);
+            const today = new Date();
+            
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            const dayDiff = today.getDate() - birthDate.getDate();
+            
+            // 생일이 지나지 않은 경우 1살 차감
+            if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) {
+                age--;
+            }
+            
+            const resultBox = document.getElementById('ageResult');
+            resultBox.innerText = `현재 만 나이는 ${age}세 입니다.`;
+            resultBox.classList.remove('hidden');
+        }
+
+        // 4) 가상 취득세 계산 로직 (기본 1.1% 가정 예시)
+        function calculateTax() {
+            const price = document.getElementById('housePrice').value;
+            if (!price || price <= 0) {
+                alert('올바른 매매 금액을 입력해 주세요.');
+                return;
+            }
+            // 간이 취득세율 1.1% 적용 예시
+            const tax = Math.floor(price * 0.011);
+            
+            const resultBox = document.getElementById('taxResult');
+            resultBox.innerText = `예상 취득세(지방교육세 포함 1.1% 가정): 약 ${tax.toLocaleString()} 원`;
+            resultBox.classList.remove('hidden');
+        }
+
+        // 첫 페이지 로드 시 첫 번째 폴더는 기본으로 열어두기
+        document.addEventListener("DOMContentLoaded", () => {
+            toggleFolder('folder1', 'arrow1');
         });
-
-        document.getElementById('lawSection').style.display = 'block';
-    }
-</script>
-
+    </script>
 </body>
 </html>
