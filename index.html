@@ -19,3 +19,19 @@
         <div id="bmiResult" class="mt-4 p-4 bg-gray-50 rounded-md font-semibold text-blue-700 text-center hidden"></div>
     </div>
 </div>
+// 5) 비만도(BMI) 계산 로직
+function calculateBMI() {
+    const height = document.getElementById('heightInput').value / 100; // cm를 m로 변환
+    const weight = document.getElementById('weightInput').value;
+    
+    if (!height || !weight) {
+        alert('키와 몸무게를 정확히 입력해 주세요.');
+        return;
+    }
+    
+    const bmi = (weight / (height * height)).toFixed(1); // BMI 계산 공식
+    
+    const resultBox = document.getElementById('bmiResult');
+    resultBox.innerText = `당신의 BMI 지수는 ${bmi} 입니다.`;
+    resultBox.classList.remove('hidden');
+}
